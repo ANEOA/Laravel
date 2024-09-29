@@ -26,29 +26,38 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         /**
-         * Показывает ошибку N+1
+         * Показывает ошибки: N+1, $fillable
          */
-        Model::preventLazyLoading(!app()->isProduction());
-        /**
-         * Показывает ошибку метода fillable
-         */
-        Model::preventSilentlyDiscardingAttributes(!app()->isProduction());
-        Db::whenQueryingForLongerThan(500, function (Connection $connection) {
-            logger()
-                ->channel('telegram')
-                ->debug('whenQueryingForLongerThan: ' . $connection->query()->toSql());
-        });
-        /**
-         *
-         */
-        $kernel = app(Kernel::class);
-        $kernel->whenRequestLifecycleIsLongerThan(
-            CarbonInterval::seconds(4),
-            function () {
+        Model::shouldBeStrict(!app()->isProduction());
+
+        if (app()->isProduction()) {
+            /**
+             * Если общий Connect (соеденение) > 500 ? Сообщение в Telegram
+             */
+            Db::whenQueryingForLongerThan(CarbonInterval::seconds(5), function (Connection $connection) {
                 logger()
                     ->channel('telegram')
-                    ->debug('whenRequestLifecycleIsLongerThan: ' . request()->url());
-            }
-        );
+                    ->debug('whenQueryingForLongerThan: ' . $connection->query()->toSql());
+            });
+
+            /**
+             * Если отдельный запрос к базе > 100 ? Сообщение в Telegram
+             */
+            DB::listen(function ($query) {
+                if ($query->time > 100) logger()->channel('telegram')->debug('DB::listen: ' . $query->sql, $query->bindings);
+            });
+
+            $kernel = app(Kernel::class);
+
+            $kernel->whenRequestLifecycleIsLongerThan(
+                CarbonInterval::seconds(4),
+                function () {
+                    logger()
+                        ->channel('telegram')
+                        ->debug('whenRequestLifecycleIsLongerThan: ' . request()->url());
+                }
+            );
+        }
+
     }
 }
