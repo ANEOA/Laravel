@@ -33,6 +33,11 @@ class AppServiceProvider extends ServiceProvider
          * Показывает ошибку метода fillable
          */
         Model::preventSilentlyDiscardingAttributes(!app()->isProduction());
+        Db::whenQueryingForLongerThan(500, function (Connection $connection) {
+            logger()
+                ->channel('telegram')
+                ->debug('whenQueryingForLongerThan: ' . $connection->query()->toSql());
+        });
         /**
          *
          */
@@ -40,7 +45,9 @@ class AppServiceProvider extends ServiceProvider
         $kernel->whenRequestLifecycleIsLongerThan(
             CarbonInterval::seconds(4),
             function () {
-
+                logger()
+                    ->channel('telegram')
+                    ->debug('whenRequestLifecycleIsLongerThan: ' . request()->url());
             }
         );
     }
