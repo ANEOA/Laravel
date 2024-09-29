@@ -1,10 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Models\Product;
 
 Route::get('/', function () {
-    logger()
-        ->channel('telegram')
-        ->debug('Route');
     return view('welcome');
 });
