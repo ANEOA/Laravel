@@ -6,9 +6,6 @@ use Monolog\Logger;
 
 class TelegramLoggerFactory
 {
-    /**
-     * Create a custom Monolog instance.
-     */
     public function __invoke(array $config): Logger
     {
         $logger = new Logger('telegram');
