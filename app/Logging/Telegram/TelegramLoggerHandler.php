@@ -22,6 +22,6 @@ class TelegramLoggerHandler extends AbstractProcessingHandler
 
     protected function write(LogRecord $record): void
     {
-        TelegramBotApi::sendMessage($record->formatted, $this->chatId, $this->token);
+        TelegramBotApi::sendMessage($this->token, $this->chatId, $record->formatted);
     }
 }
